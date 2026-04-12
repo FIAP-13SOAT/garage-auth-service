@@ -7,6 +7,8 @@ import { DeleteUserUseCase } from '../../../../application/user/DeleteUserUseCas
 import { ListUsersUseCase } from '../../../../application/user/ListUsersUseCase.js';
 import { UserPresenter } from '../presenters/UserPresenter.js';
 import { UserController } from '../controllers/UserController.js';
+import { requireRole } from '../middlewares/requireRole.js';
+import { UserRole } from '../../../../domain/user/UserRole.js';
 
 const gateway = new UserGatewayImpl(prisma);
 const presenter = new UserPresenter();
@@ -19,6 +21,8 @@ const controller = new UserController(
 );
 
 const router = Router();
+
+router.use(requireRole(UserRole.ADMIN));
 
 router.post('/', controller.create.bind(controller));
 router.get('/', controller.list.bind(controller));
