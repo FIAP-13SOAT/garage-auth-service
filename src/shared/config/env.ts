@@ -2,7 +2,7 @@ export const env = {
   port: parseInt(process.env['PORT'] ?? '8083', 10),
   nodeEnv: process.env['NODE_ENV'] ?? 'development',
   databaseUrl: process.env['DATABASE_URL'] ?? '',
-  osDatabaseUrl: process.env['OS_DATABASE_URL'] ?? '',
+  rabbitmqUrl: process.env['RABBITMQ_URL'] ?? '',
   jwt: {
     privateKey: process.env['JWT_PRIVATE_KEY'] ?? '',
     publicKey: process.env['JWT_PUBLIC_KEY'] ?? '',
