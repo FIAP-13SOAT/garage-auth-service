@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UpsertCustomerCredentialsUseCase } from '../UpsertCustomerCredentialsUseCase.js';
 import type { CustomerCredentialsGateway } from '../../../adapters/outbound/database/CustomerCredentialsGateway.js';
+import { toUUID } from '../../../shared/types/UUID.js';
 
 const makeGateway = (): CustomerCredentialsGateway =>
   ({
@@ -19,20 +20,20 @@ describe('UpsertCustomerCredentialsUseCase', () => {
   });
 
   it('delegates to gateway.upsertByCustomerId with all fields', async () => {
-    await useCase.execute({ customerId: 'cust-1', cpfCnpj: '52998224725', email: 'joao@email.com' });
+    await useCase.execute({ customerId: toUUID('cust-1'), cpfCnpj: '52998224725', email: 'joao@email.com' });
 
     expect(gateway.upsertByCustomerId).toHaveBeenCalledOnce();
     expect(gateway.upsertByCustomerId).toHaveBeenCalledWith('cust-1', '52998224725', 'joao@email.com');
   });
 
   it('delegates with null email when email is omitted', async () => {
-    await useCase.execute({ customerId: 'cust-2', cpfCnpj: '52998224725' });
+    await useCase.execute({ customerId: toUUID('cust-2'), cpfCnpj: '52998224725' });
 
     expect(gateway.upsertByCustomerId).toHaveBeenCalledWith('cust-2', '52998224725', undefined);
   });
 
   it('is idempotent: calling twice does not throw', async () => {
-    const command = { customerId: 'cust-3', cpfCnpj: '52998224725', email: 'a@b.com' };
+    const command = { customerId: toUUID('cust-3'), cpfCnpj: '52998224725', email: 'a@b.com' };
 
     await useCase.execute(command);
     await useCase.execute(command);
@@ -43,6 +44,6 @@ describe('UpsertCustomerCredentialsUseCase', () => {
   it('propagates gateway errors', async () => {
     vi.mocked(gateway.upsertByCustomerId).mockRejectedValue(new Error('DB error'));
 
-    await expect(useCase.execute({ customerId: 'cust-1', cpfCnpj: '52998224725' })).rejects.toThrow('DB error');
+    await expect(useCase.execute({ customerId: toUUID('cust-1'), cpfCnpj: '52998224725' })).rejects.toThrow('DB error');
   });
 });
