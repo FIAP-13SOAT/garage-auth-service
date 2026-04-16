@@ -23,9 +23,7 @@ const startConsumers = async (): Promise<void> => {
 const start = async (): Promise<void> => {
   await connectDatabase();
 
-  startConsumers().catch((err) => {
-    console.error('Customer events consumer failed to start (RabbitMQ unavailable?):', err);
-  });
+  await startConsumers();
 
   const server = app.listen(env.port, () => {
     console.warn(`garage-auth-service running on port ${env.port}`);
