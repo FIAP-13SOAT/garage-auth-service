@@ -8,6 +8,7 @@ import { CustomerCredentialsGateway } from './adapters/outbound/database/Custome
 import { UpsertCustomerCredentialsUseCase } from './application/customerCredentials/UpsertCustomerCredentialsUseCase.js';
 import { DeleteCustomerCredentialsUseCase } from './application/customerCredentials/DeleteCustomerCredentialsUseCase.js';
 import { CustomerEventsConsumer } from './adapters/inbound/messaging/CustomerEventsConsumer.js';
+import { Logger } from './shared/logger/Logger.js';
 
 const startConsumers = async (): Promise<void> => {
   const channel = await getRabbitMQChannel();
@@ -26,7 +27,7 @@ const start = async (): Promise<void> => {
   await startConsumers();
 
   const server = app.listen(env.port, () => {
-    console.warn(`garage-auth-service running on port ${env.port}`);
+    Logger.info('server.listening', { port: env.port });
   });
 
   const shutdown = async (): Promise<void> => {
@@ -40,6 +41,8 @@ const start = async (): Promise<void> => {
 };
 
 start().catch((err) => {
-  console.error('Failed to start server:', err);
+  Logger.error('server.start_failed', {
+    error: err instanceof Error ? err.message : String(err),
+  });
   process.exit(1);
 });
