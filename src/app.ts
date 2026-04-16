@@ -10,7 +10,7 @@ app.disable('x-powered-by');
 app.use(express.json());
 
 app.use('/health', healthResource);
-app.use('/login', authResource);
+app.use('/', authResource);
 app.use('/admin/users', userResource);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
