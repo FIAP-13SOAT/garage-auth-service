@@ -36,7 +36,7 @@ export class UserController {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const user = await this.updateUseCase.execute({
-        id: toUUID(req.params['id']!),
+        id: toUUID(String(req.params['id'])),
         ...(req.body as object),
       });
       res.json(this.presenter.toResponse(user));
@@ -47,7 +47,7 @@ export class UserController {
 
   async remove(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      await this.deleteUseCase.execute({ id: toUUID(req.params['id']!) });
+      await this.deleteUseCase.execute({ id: toUUID(String(req.params['id'])) });
       res.status(204).end();
     } catch (err) {
       next(err);
