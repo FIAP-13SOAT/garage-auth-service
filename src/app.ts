@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import healthResource from './adapters/inbound/rest/routes/healthResource.js';
 import userResource from './adapters/inbound/rest/routes/userResource.js';
 import authResource from './adapters/inbound/rest/routes/authResource.js';
+import wellKnownResource from './adapters/inbound/rest/routes/wellKnownResource.js';
 import { requestLogger } from './adapters/inbound/rest/middlewares/requestLogger.js';
 import jwksResource from './adapters/inbound/rest/routes/jwksResource.js';
 import { AppError } from './shared/errors/AppError.js';
@@ -18,6 +19,7 @@ app.use('/.well-known', jwksResource);
 app.use('/login', authResource);
 app.use('/', authResource);
 app.use('/admin/users', userResource);
+app.use('/.well-known', wellKnownResource);
 
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof AppError) {

@@ -25,7 +25,12 @@ export class LoginCustomerUseCase {
     const token = jwt.sign(
       { sub: credentials.customerId, role: 'CUSTOMER' },
       env.jwt.privateKey,
-      { algorithm: 'RS256', expiresIn: env.jwt.expiresIn } as jwt.SignOptions,
+      {
+        algorithm: 'RS256',
+        expiresIn: env.jwt.expiresIn,
+        issuer: env.apiGatewayIssuerUrl,
+        audience: 'garage-api',
+      } as jwt.SignOptions,
     );
 
     AuthMetrics.loginSuccess('customer');
