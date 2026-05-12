@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "prestart": "prisma db push --skip-generate",
+    "prestart": "prisma db push",
     "start": "node dist/server.js",
     "lint": "eslint src/",
     "test": "vitest run",
