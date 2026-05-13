@@ -1,10 +1,21 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 import { requireRole } from '../requireRole.js';
 import { UserRole } from '../../../../../domain/user/UserRole.js';
 
-const makeReq = (role?: string) =>
-  ({ headers: { 'x-user-role': role } }) as unknown as Request;
+const JWT_SECRET = 'soat-dev-secret';
+
+const makeToken = (role: string) =>
+  jwt.sign({ sub: 'user-1', role }, JWT_SECRET, { algorithm: 'HS256' });
+
+const makeReq = (opts: { role?: string; token?: string } = {}) =>
+  ({
+    headers: {
+      ...(opts.role !== undefined ? { 'x-user-role': opts.role } : {}),
+      ...(opts.token !== undefined ? { authorization: `Bearer ${opts.token}` } : {}),
+    },
+  }) as unknown as Request;
 
 const makeRes = () => {
   const res = { status: vi.fn(), json: vi.fn() } as unknown as Response;
@@ -15,44 +26,62 @@ const makeRes = () => {
 const next: NextFunction = vi.fn();
 
 describe('requireRole', () => {
-  it('should call next when role matches', () => {
-    const middleware = requireRole(UserRole.ADMIN);
-    middleware(makeReq('ADMIN'), makeRes(), next);
-    expect(next).toHaveBeenCalled();
+  describe('via x-user-role header (gateway path)', () => {
+    it('should call next when role matches', () => {
+      requireRole(UserRole.ADMIN)(makeReq({ role: 'ADMIN' }), makeRes(), next);
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should call next when one of multiple allowed roles matches', () => {
+      requireRole(UserRole.ADMIN, UserRole.CLERK)(makeReq({ role: 'CLERK' }), makeRes(), next);
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should return 403 when role does not match', () => {
+      const res = makeRes();
+      requireRole(UserRole.ADMIN)(makeReq({ role: 'MECHANIC' }), res, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Forbidden' });
+    });
+
+    it('should return 403 for unknown role value', () => {
+      const res = makeRes();
+      requireRole(UserRole.ADMIN)(makeReq({ role: 'UNKNOWN_ROLE' }), res, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
   });
 
-  it('should call next when one of multiple allowed roles matches', () => {
-    const middleware = requireRole(UserRole.ADMIN, UserRole.CLERK);
-    middleware(makeReq('CLERK'), makeRes(), next);
-    expect(next).toHaveBeenCalled();
+  describe('via JWT Authorization header (direct access fallback)', () => {
+    it('should call next when JWT contains allowed role', () => {
+      const localNext = vi.fn();
+      requireRole(UserRole.ADMIN)(makeReq({ token: makeToken('ADMIN') }), makeRes(), localNext);
+      expect(localNext).toHaveBeenCalled();
+    });
+
+    it('should return 403 when JWT role is not allowed', () => {
+      const res = makeRes();
+      requireRole(UserRole.ADMIN)(makeReq({ token: makeToken('MECHANIC') }), res, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    it('should return 403 when JWT is invalid', () => {
+      const res = makeRes();
+      requireRole(UserRole.ADMIN)(makeReq({ token: 'not.a.valid.token' }), res, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
   });
 
-  it('should return 403 when role does not match', () => {
-    const res = makeRes();
-    const middleware = requireRole(UserRole.ADMIN);
-    middleware(makeReq('MECHANIC'), res, next);
-    expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Forbidden' });
-  });
+  describe('no credentials', () => {
+    it('should return 403 when neither header nor token is present', () => {
+      const res = makeRes();
+      requireRole(UserRole.ADMIN)(makeReq(), res, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
 
-  it('should return 403 when x-user-role header is missing', () => {
-    const res = makeRes();
-    const middleware = requireRole(UserRole.ADMIN);
-    middleware(makeReq(undefined), res, next);
-    expect(res.status).toHaveBeenCalledWith(403);
-  });
-
-  it('should return 403 for unknown role value', () => {
-    const res = makeRes();
-    const middleware = requireRole(UserRole.ADMIN);
-    middleware(makeReq('UNKNOWN_ROLE'), res, next);
-    expect(res.status).toHaveBeenCalledWith(403);
-  });
-
-  it('should not call next when access is denied', () => {
-    const localNext = vi.fn();
-    const middleware = requireRole(UserRole.ADMIN);
-    middleware(makeReq('MECHANIC'), makeRes(), localNext);
-    expect(localNext).not.toHaveBeenCalled();
+    it('should not call next when access is denied', () => {
+      const localNext = vi.fn();
+      requireRole(UserRole.ADMIN)(makeReq({ role: 'MECHANIC' }), makeRes(), localNext);
+      expect(localNext).not.toHaveBeenCalled();
+    });
   });
 });
