@@ -43,7 +43,7 @@ describe('LoginCustomerUseCase', () => {
     expect(jwt.sign).toHaveBeenCalledWith(
       { sub: customerId, role: 'CUSTOMER' },
       expect.any(String),
-      expect.objectContaining({ algorithm: 'RS256' }),
+      expect.objectContaining({ algorithm: 'HS256' }),
     );
   });
 

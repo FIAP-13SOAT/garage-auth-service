@@ -3,3 +3,6 @@ dist/
 coverage/
 .env
 *.pem
+prisma/seed.js
+prisma/seed.js.map
+prisma/seed.d.ts

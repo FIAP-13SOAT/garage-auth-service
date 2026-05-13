@@ -81,7 +81,7 @@ describe('LoginAdminUseCase', () => {
     expect(jwt.sign).toHaveBeenCalledWith(
       { sub: user.id, role: UserRole.ADMIN },
       expect.any(String),
-      expect.objectContaining({ algorithm: 'RS256' }),
+      expect.objectContaining({ algorithm: 'HS256' }),
     );
   });
 });
