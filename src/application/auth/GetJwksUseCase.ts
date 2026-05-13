@@ -17,6 +17,8 @@ export class GetJwksUseCase {
   constructor(private readonly publicKeyPem: string) {}
 
   execute(): JwksResponse {
+    if (!this.publicKeyPem) return { keys: [] };
+
     const publicKey = createPublicKey(this.publicKeyPem);
     const jwk = publicKey.export({ format: 'jwk' }) as { n: string; e: string };
 

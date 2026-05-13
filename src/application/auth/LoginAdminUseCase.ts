@@ -25,8 +25,8 @@ export class LoginAdminUseCase {
 
     const token = jwt.sign(
       { sub: user.id, role: user.role },
-      env.jwt.privateKey,
-      { algorithm: 'RS256', expiresIn: env.jwt.expiresIn } as jwt.SignOptions,
+      env.jwt.secret,
+      { algorithm: 'HS256', expiresIn: env.jwt.expiresIn } as jwt.SignOptions,
     );
 
     return { token };
