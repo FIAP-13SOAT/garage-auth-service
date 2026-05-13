@@ -2,6 +2,7 @@ import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
 import healthResource from './adapters/inbound/rest/routes/healthResource.js';
 import userResource from './adapters/inbound/rest/routes/userResource.js';
+import customerCredentialsResource from './adapters/inbound/rest/routes/customerCredentialsResource.js';
 import authResource from './adapters/inbound/rest/routes/authResource.js';
 import wellKnownResource from './adapters/inbound/rest/routes/wellKnownResource.js';
 import { requestLogger } from './adapters/inbound/rest/middlewares/requestLogger.js';
@@ -19,6 +20,7 @@ app.use('/.well-known', jwksResource);
 app.use('/login', authResource);
 app.use('/', authResource);
 app.use('/admin/users', userResource);
+app.use('/admin/customer-credentials', customerCredentialsResource);
 app.use('/.well-known', wellKnownResource);
 
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {

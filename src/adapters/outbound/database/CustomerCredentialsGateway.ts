@@ -30,4 +30,16 @@ export class CustomerCredentialsGateway {
   async deleteByCustomerId(customerId: UUID): Promise<void> {
     await this.prisma.customerCredentials.deleteMany({ where: { customerId } });
   }
+
+  async findAll(): Promise<CustomerCredentials[]> {
+    const rows = await this.prisma.customerCredentials.findMany({ orderBy: { createdAt: 'desc' } });
+    return rows.map((row) => new CustomerCredentials({
+      id: toUUID(row.id),
+      customerId: toUUID(row.customerId),
+      cpfCnpj: row.cpfCnpj,
+      email: row.email,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
+  }
 }
