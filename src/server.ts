@@ -1,5 +1,5 @@
-import './instrument.js';
 import 'dotenv/config';
+import './instrument.js';
 import { env } from './shared/config/env.js';
 import app from './app.js';
 import { connectDatabase, disconnectDatabase, prisma } from './adapters/outbound/database/connection.js';
