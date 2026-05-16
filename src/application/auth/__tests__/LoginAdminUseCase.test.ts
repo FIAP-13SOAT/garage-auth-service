@@ -79,9 +79,9 @@ describe('LoginAdminUseCase', () => {
 
     const jwt = (await import('jsonwebtoken')).default;
     expect(jwt.sign).toHaveBeenCalledWith(
-      { sub: user.id, role: UserRole.ADMIN },
+      expect.objectContaining({ sub: user.id, role: UserRole.ADMIN }),
       expect.any(String),
-      expect.objectContaining({ algorithm: 'HS256' }),
+      expect.objectContaining({ algorithm: 'RS256' }),
     );
   });
 });

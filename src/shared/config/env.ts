@@ -5,8 +5,15 @@ export const env = {
   rabbitmqUrl: process.env['RABBITMQ_URL'] ?? '',
   apiGatewayIssuerUrl: process.env['API_GATEWAY_ISSUER_URL'] ?? 'http://localhost:8083',
   jwt: {
-    secret: process.env['JWT_SECRET'] ?? 'soat-dev-secret',
+    privateKey: (process.env['JWT_PRIVATE_KEY'] ?? '').replace(/\\n/g, '\n'),
+    publicKey: (process.env['JWT_PUBLIC_KEY'] ?? '').replace(/\\n/g, '\n'),
+    audience: process.env['JWT_AUDIENCE'] ?? 'garage-api',
     expiresIn: process.env['JWT_EXPIRES_IN'] ?? '8h',
+  },
+  seed: {
+    adminEmail: process.env['SEED_ADMIN_EMAIL'] ?? '',
+    adminPassword: process.env['SEED_ADMIN_PASSWORD'] ?? '',
+    adminFullname: process.env['SEED_ADMIN_FULLNAME'] ?? 'Admin BDD',
   },
   datadog: {
     service: process.env['DD_SERVICE'] ?? 'garage-auth-service',

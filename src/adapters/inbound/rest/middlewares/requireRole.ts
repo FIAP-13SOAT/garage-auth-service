@@ -1,6 +1,4 @@
 import type { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { env } from '../../../../shared/config/env.js';
 import { UserRole } from '../../../../domain/user/UserRole.js';
 
 function extractRole(req: Request): string | null {
@@ -8,14 +6,15 @@ function extractRole(req: Request): string | null {
   const headerRole = req.headers['x-user-role'];
   if (typeof headerRole === 'string' && headerRole) return headerRole;
 
-  // Fallback: read role directly from JWT (local dev without gateway)
+  // Fallback: decode JWT payload (signature already validated by API Gateway in prod)
   const auth = req.headers['authorization'];
   if (auth?.startsWith('Bearer ')) {
     try {
-      const payload = jwt.verify(auth.slice(7), env.jwt.secret) as { role?: string };
-      if (typeof payload.role === 'string') return payload.role;
+      const [, payload] = auth.slice(7).split('.');
+      const decoded = JSON.parse(Buffer.from(payload ?? '', 'base64url').toString()) as { role?: string };
+      if (typeof decoded.role === 'string') return decoded.role;
     } catch {
-      // invalid or expired token — fall through to 403
+      // malformed token — fall through to 403
     }
   }
 

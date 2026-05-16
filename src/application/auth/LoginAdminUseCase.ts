@@ -24,9 +24,9 @@ export class LoginAdminUseCase {
     if (!passwordMatches) throw new InvalidCredentialsException();
 
     const token = jwt.sign(
-      { sub: user.id, role: user.role },
-      env.jwt.secret,
-      { algorithm: 'HS256', expiresIn: env.jwt.expiresIn } as jwt.SignOptions,
+      { sub: user.id, role: user.role, iss: env.apiGatewayIssuerUrl, aud: env.jwt.audience },
+      env.jwt.privateKey,
+      { algorithm: 'RS256', expiresIn: env.jwt.expiresIn } as jwt.SignOptions,
     );
 
     return { token };

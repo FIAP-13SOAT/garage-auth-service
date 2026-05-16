@@ -41,9 +41,9 @@ describe('LoginCustomerUseCase', () => {
     expect(result.token).toBe('signed.jwt.token');
     const jwt = (await import('jsonwebtoken')).default;
     expect(jwt.sign).toHaveBeenCalledWith(
-      { sub: customerId, role: 'CUSTOMER' },
+      expect.objectContaining({ sub: customerId, role: 'CUSTOMER' }),
       expect.any(String),
-      expect.objectContaining({ algorithm: 'HS256' }),
+      expect.objectContaining({ algorithm: 'RS256' }),
     );
   });
 

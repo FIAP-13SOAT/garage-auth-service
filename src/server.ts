@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import './instrument.js';
+import bcrypt from 'bcrypt';
 import { env } from './shared/config/env.js';
 import app from './app.js';
 import { connectDatabase, disconnectDatabase, prisma } from './adapters/outbound/database/connection.js';
@@ -9,6 +10,16 @@ import { UpsertCustomerCredentialsUseCase } from './application/customerCredenti
 import { DeleteCustomerCredentialsUseCase } from './application/customerCredentials/DeleteCustomerCredentialsUseCase.js';
 import { CustomerEventsConsumer } from './adapters/inbound/messaging/CustomerEventsConsumer.js';
 import { Logger } from './shared/logger/Logger.js';
+
+const seedAdmin = async (): Promise<void> => {
+  const { adminEmail, adminPassword, adminFullname } = env.seed;
+  if (!adminEmail || !adminPassword) return;
+  const existing = await prisma.user.findUnique({ where: { email: adminEmail } });
+  if (existing) return;
+  const passwordHash = await bcrypt.hash(adminPassword, 10);
+  await prisma.user.create({ data: { fullname: adminFullname, email: adminEmail, passwordHash, role: 'ADMIN' } });
+  Logger.info('seed.admin_created', { email: adminEmail });
+};
 
 const startConsumers = async (): Promise<void> => {
   const channel = await getRabbitMQChannel();
@@ -23,7 +34,7 @@ const startConsumers = async (): Promise<void> => {
 
 const start = async (): Promise<void> => {
   await connectDatabase();
-
+  await seedAdmin();
   await startConsumers();
 
   const server = app.listen(env.port, () => {
