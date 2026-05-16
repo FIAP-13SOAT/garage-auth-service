@@ -15,10 +15,9 @@ ENV NODE_ENV=production \
     DD_ENV=production \
     DD_VERSION=1.0.0
 COPY package*.json ./
-RUN npm ci --omit=dev --ignore-scripts
 COPY prisma.config.ts ./
 COPY prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 EXPOSE 8083
 USER node
