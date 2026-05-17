@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: garage-auth-service
-          image: <ECR_REGISTRY>/garage-auth-service:latest
+          image: 500431122450.dkr.ecr.us-east-1.amazonaws.com/garage-app:auth-latest
           ports:
             - containerPort: 8083
           envFrom:
@@ -44,6 +44,11 @@ spec:
                 secretKeyRef:
                   name: garage-auth-service-secrets
                   key: JWT_PUBLIC_KEY
+            - name: API_GATEWAY_ISSUER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: garage-auth-service-secrets
+                  key: API_GATEWAY_ISSUER_URL
             - name: DD_API_KEY
               valueFrom:
                 secretKeyRef:
