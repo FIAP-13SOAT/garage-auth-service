@@ -2,7 +2,11 @@ export const env = {
   port: parseInt(process.env['PORT'] ?? '8083', 10),
   nodeEnv: process.env['NODE_ENV'] ?? 'development',
   databaseUrl: process.env['DATABASE_URL'] ?? '',
-  rabbitmqUrl: process.env['RABBITMQ_URL'] ?? '',
+  awsRegion: process.env['AWS_REGION'] ?? 'us-east-1',
+  sqsQueues: {
+    customerEvents: process.env['SQS_CUSTOMER_EVENTS_URL'] ?? '',
+  },
+  sqsEndpoint: process.env['SQS_ENDPOINT'],
   apiGatewayIssuerUrl: process.env['API_GATEWAY_ISSUER_URL'] ?? 'http://localhost:8083',
   jwt: {
     privateKey: (process.env['JWT_PRIVATE_KEY'] ?? '').replace(/\\n/g, '\n'),

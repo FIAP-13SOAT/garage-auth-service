@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import { env } from './shared/config/env.js';
 import app from './app.js';
 import { connectDatabase, disconnectDatabase, prisma } from './adapters/outbound/database/connection.js';
-import { getRabbitMQChannel, closeRabbitMQ } from './adapters/outbound/messaging/rabbitmq.js';
+import { SQSBroker, sqsClient } from './adapters/outbound/messaging/SQSBroker.js';
 import { CustomerCredentialsGateway } from './adapters/outbound/database/CustomerCredentialsGateway.js';
 import { UpsertCustomerCredentialsUseCase } from './application/customerCredentials/UpsertCustomerCredentialsUseCase.js';
 import { DeleteCustomerCredentialsUseCase } from './application/customerCredentials/DeleteCustomerCredentialsUseCase.js';
@@ -21,29 +21,25 @@ const seedAdmin = async (): Promise<void> => {
   Logger.info('seed.admin_created', { email: adminEmail });
 };
 
-const startConsumers = async (): Promise<void> => {
-  const channel = await getRabbitMQChannel();
-  const gateway = new CustomerCredentialsGateway(prisma);
-  const consumer = new CustomerEventsConsumer(
-    channel,
-    new UpsertCustomerCredentialsUseCase(gateway),
-    new DeleteCustomerCredentialsUseCase(gateway),
-  );
-  await consumer.start();
-};
-
 const start = async (): Promise<void> => {
   await connectDatabase();
   await seedAdmin();
-  await startConsumers();
+
+  const broker = new SQSBroker(sqsClient);
+  const gateway = new CustomerCredentialsGateway(prisma);
+  await new CustomerEventsConsumer(
+    broker,
+    new UpsertCustomerCredentialsUseCase(gateway),
+    new DeleteCustomerCredentialsUseCase(gateway),
+  ).start();
 
   const server = app.listen(env.port, () => {
     Logger.info('server.listening', { port: env.port });
   });
 
   const shutdown = async (): Promise<void> => {
+    broker.stop();
     server.close();
-    await closeRabbitMQ();
     await disconnectDatabase();
   };
 

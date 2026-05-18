@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/johann-bandelow/git/SOAT/garage-stock-service/src/adapters/outbound/database/**)",
+      "Read(//home/johann-bandelow/git/SOAT/garage-stock-service/src/adapters/inbound/rest/controllers/**)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git checkout:*)",
+      "Bash(node /home/johann-bandelow/git/SOAT/garage-auth-service/scripts/generate-rsa-keys.mjs)",
+      "Bash(git push:*)",
+      "Bash(gh pr:*)"
+    ]
+  }
+}
