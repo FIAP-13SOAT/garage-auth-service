@@ -29,11 +29,6 @@ spec:
                 secretKeyRef:
                   name: garage-auth-service-secrets
                   key: DATABASE_URL
-            - name: RABBITMQ_URL
-              valueFrom:
-                secretKeyRef:
-                  name: garage-auth-service-secrets
-                  key: RABBITMQ_URL
             - name: JWT_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
