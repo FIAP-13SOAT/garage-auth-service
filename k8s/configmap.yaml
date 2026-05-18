@@ -11,3 +11,4 @@ data:
   DD_ENV: "production"
   DD_VERSION: "1.0.0"
   DD_TRACE_ENABLED: "true"
+  DD_SITE: "us5.datadoghq.com"
