@@ -7,7 +7,7 @@ router.get('/', (_req, res) => {
 });
 
 router.get('/version', (_req, res) => {
-  res.json({ version: '1.2.0', service: 'garage-auth-service' });
+  res.json({ version: '1.3.0', service: 'garage-auth-service' });
 });
 
 export default router;
