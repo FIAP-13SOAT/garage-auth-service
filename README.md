@@ -9,7 +9,6 @@ Microsserviço responsável pela autenticação e gerenciamento de identidade da
 - Emissão de tokens JWT assinados com RSA-256 (RS256)
 - Exposição do JWKS endpoint para validação stateless pelos outros microsserviços
 - Gerenciamento de usuários internos (CRUD)
-- Sincronização de credenciais de clientes via eventos do OS Service (RabbitMQ)
 
 ## Stack
 
@@ -18,7 +17,6 @@ Microsserviço responsável pela autenticação e gerenciamento de identidade da
 - **Framework**: Express 5
 - **ORM**: Prisma 7 + PostgreSQL 16
 - **Autenticação**: jsonwebtoken (RS256), bcrypt
-- **Mensageria**: amqplib (RabbitMQ)
 - **Testes**: Vitest + @vitest/coverage-v8
 - **Observabilidade**: Datadog (dd-trace, logs JSON, métricas StatsD)
 
@@ -62,11 +60,6 @@ PostgreSQL com as seguintes entidades:
 | Método | Rota | Descrição |
 |---|---|---|
 | `GET` | `/health` | Health check |
-
-## Mensagens RabbitMQ
-
-### Consome — `customer.events` (publicado pelo OS Service)
-O serviço sincroniza automaticamente as credenciais dos clientes cadastrados no OS Service. Quando um cliente é criado, atualizado ou removido no OS Service, o auth-service atualiza sua tabela `CustomerCredentials` para manter a consistência.
 
 ## Validação de tokens nos outros serviços
 
@@ -112,7 +105,7 @@ Coloque o conteúdo das chaves em uma linha com `\n` entre os breaks e configure
 
 ```bash
 cp .env.example .env
-# Configure DATABASE_URL, RABBITMQ_URL e as chaves RSA
+# Configure DATABASE_URL e as chaves RSA
 
 docker compose up -d
 ```
@@ -149,7 +142,6 @@ Cobertura mínima configurada: **90%** em linhas, funções e branches.
 |---|---|
 | `PORT` | Porta HTTP (padrão: `8083`) |
 | `DATABASE_URL` | String de conexão PostgreSQL |
-| `RABBITMQ_URL` | String de conexão RabbitMQ (amqp/amqps) |
 | `JWT_PRIVATE_KEY` | Chave privada RSA para assinar tokens (formato PEM, `\n` como quebra de linha) |
 | `JWT_PUBLIC_KEY` | Chave pública RSA para validação (formato PEM, `\n` como quebra de linha) |
 | `JWT_EXPIRES_IN` | Tempo de expiração do token (ex: `8h`) |

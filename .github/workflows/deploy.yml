@@ -54,22 +54,12 @@ jobs:
             --query SecretString --output text | jq -r '.password | @uri')
           DATABASE_URL="postgresql://postgres:${DB_PASS}@${DB_HOST}/garage_${{ env.SERVICE }}?sslmode=require"
 
-          MQ_ENDPOINT=$(aws ssm get-parameter \
-            --name /garage/prod/rabbitmq/endpoint \
-            --query Parameter.Value --output text)
-          MQ_HOST=$(echo "$MQ_ENDPOINT" | sed 's|amqps://||')
-          MQ_PASS=$(aws ssm get-parameter \
-            --name /garage/prod/rabbitmq/password \
-            --with-decryption --query Parameter.Value --output text)
-          RABBITMQ_URL="amqps://admin:${MQ_PASS}@${MQ_HOST}"
-
           API_GW_URL=$(aws ssm get-parameter \
             --name /garage/prod/api_gateway_url \
             --query Parameter.Value --output text)
 
           kubectl create secret generic garage-auth-service-secrets \
             --from-literal=DATABASE_URL="$DATABASE_URL" \
-            --from-literal=RABBITMQ_URL="$RABBITMQ_URL" \
             --from-literal=JWT_PRIVATE_KEY="${{ secrets.JWT_PRIVATE_KEY }}" \
             --from-literal=JWT_PUBLIC_KEY="${{ secrets.JWT_PUBLIC_KEY }}" \
             --from-literal=API_GATEWAY_ISSUER_URL="$API_GW_URL" \
