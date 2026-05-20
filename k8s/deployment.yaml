@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         app: garage-auth-service
+      annotations:
+        ad.datadoghq.com/garage-auth-service.logs: '[{"source":"nodejs","service":"garage-auth-service"}]'
     spec:
       containers:
         - name: garage-auth-service
