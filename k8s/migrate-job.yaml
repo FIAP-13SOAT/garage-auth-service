@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: garage-auth-migrate-__IMAGE_TAG__
+  namespace: default
+  labels:
+    app: garage-auth-service
+    component: migrate
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: garage-auth-service
+        component: migrate
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: prisma-migrate
+          image: 500431122450.dkr.ecr.us-east-1.amazonaws.com/garage-auth-service:auth-__IMAGE_TAG__
+          command: ["npx", "prisma", "db", "push", "--accept-data-loss"]
+          terminationMessagePolicy: FallbackToLogsOnError
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: garage-auth-service-secrets
+                  key: DATABASE_URL
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "125m"
+            limits:
+              memory: "512Mi"
+              cpu: "250m"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000

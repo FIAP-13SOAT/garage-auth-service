@@ -19,6 +19,7 @@ COPY prisma.config.ts ./
 COPY prisma ./prisma
 RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
+RUN chown -R node:node /app
 EXPOSE 8083
 USER node
 CMD ["node", "dist/server.js"]

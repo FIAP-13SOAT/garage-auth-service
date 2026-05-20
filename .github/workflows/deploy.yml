@@ -41,26 +41,6 @@ jobs:
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name garage-cluster
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Apply database schema (prisma db push)
-        run: |
-          npm ci --ignore-scripts
-          DB_HOST=$(aws ssm get-parameter \
-            --name /garage/prod/${{ env.SERVICE }}/db/endpoint \
-            --query Parameter.Value --output text)
-          SECRET_ARN=$(aws ssm get-parameter \
-            --name /garage/prod/${{ env.SERVICE }}/db/secret_arn \
-            --query Parameter.Value --output text)
-          DB_PASS=$(aws secretsmanager get-secret-value \
-            --secret-id "$SECRET_ARN" \
-            --query SecretString --output text | jq -r '.password')
-          export DATABASE_URL="postgresql://postgres:${DB_PASS}@${DB_HOST}/garage_${{ env.SERVICE }}?sslmode=require"
-          npx prisma db push --accept-data-loss
-
       - name: Create / update K8s secrets
         run: |
           DB_HOST=$(aws ssm get-parameter \
@@ -71,7 +51,7 @@ jobs:
             --query Parameter.Value --output text)
           DB_PASS=$(aws secretsmanager get-secret-value \
             --secret-id "$SECRET_ARN" \
-            --query SecretString --output text | jq -r '.password')
+            --query SecretString --output text | jq -r '.password | @uri')
           DATABASE_URL="postgresql://postgres:${DB_PASS}@${DB_HOST}/garage_${{ env.SERVICE }}?sslmode=require"
 
           MQ_ENDPOINT=$(aws ssm get-parameter \
@@ -98,6 +78,51 @@ jobs:
           kubectl create secret generic datadog-secrets \
             --from-literal=DD_API_KEY="${{ secrets.DD_API_KEY }}" \
             --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Apply database schema (prisma db push via K8s Job)
+        run: |
+          IMAGE_TAG="${{ github.sha }}"
+          JOB_NAME="garage-auth-migrate-${IMAGE_TAG}"
+          sed "s|__IMAGE_TAG__|${IMAGE_TAG}|g" k8s/migrate-job.yaml | kubectl apply -f -
+
+          echo "::group::Waiting for job ${JOB_NAME}"
+          DEADLINE=$(( $(date +%s) + 300 ))
+          STATUS="pending"
+          while [ $(date +%s) -lt $DEADLINE ]; do
+            if kubectl get job "${JOB_NAME}" -o jsonpath='{.status.conditions[?(@.type=="Complete")].status}' | grep -q True; then
+              STATUS="complete"; break
+            fi
+            if kubectl get job "${JOB_NAME}" -o jsonpath='{.status.conditions[?(@.type=="Failed")].status}' | grep -q True; then
+              STATUS="failed"; break
+            fi
+            sleep 5
+          done
+          echo "Final job status: ${STATUS}"
+          echo "::endgroup::"
+
+          echo "::group::Job describe"
+          kubectl describe "job/${JOB_NAME}" || true
+          echo "::endgroup::"
+
+          echo "::group::Pod describe"
+          kubectl describe pod -l job-name="${JOB_NAME}" || true
+          echo "::endgroup::"
+
+          echo "::group::Termination messages (apiserver, bypasses kubelet)"
+          kubectl get pod -l job-name="${JOB_NAME}" \
+            -o jsonpath='{range .items[*]}=== {.metadata.name} ==={"\n"}{.status.containerStatuses[*].state.terminated.message}{"\n\n"}{end}' \
+            || true
+          echo "::endgroup::"
+
+          echo "::group::Pod logs (via kubelet, may fail with TLS error)"
+          kubectl logs "job/${JOB_NAME}" --tail=500 --all-containers=true --insecure-skip-tls-verify-backend=true || true
+          echo "::endgroup::"
+
+          if [ "${STATUS}" = "complete" ]; then
+            exit 0
+          fi
+          echo "Migration job did not complete (status=${STATUS})"
+          exit 1
 
       - name: Apply K8s manifests
         run: |
